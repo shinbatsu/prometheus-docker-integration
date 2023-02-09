@@ -90,3 +90,66 @@ func emitMemoryMetrics(ch chan<- prometheus.Metric, name, stack, service string,
 	ch <- prometheus.MustNewConstMetric(memReservationDesc, prometheus.GaugeValue, float64(reservation), name, stack, service)
 	ch <- prometheus.MustNewConstMetric(memLimitDesc, prometheus.GaugeValue, float64(limit), name, stack, service)
 }
+func detectCgroupVersion() string {
+	if version, ok := os.LookupEnv("DOCKER_CLUSTER_CGROUP_VERSION"); ok {
+		return version
+	}
+	return "v1"
+}
+
+func containerUsageBytes(containerID, cgroupVersion string) (int64, error) {
+	path := "/host/sys/fs/cgroup/memory/docker/" + containerID + "/memory.usage_in_bytes"
+	if cgroupVersion == "v2" {
+		path = "/host/docker-" + containerID + ".scope/memory.current"
+	}
+	return readIntFromFile(path)
+}
+
+func containerTotalCacheBytes(containerID, cgroupVersion string) (int64, error) {
+	var path string
+	if cgroupVersion == "v2" {
+		path = "/host/docker-" + containerID + ".scope/memory.stat"
+		stat, err := readMapFile(path)
+		if err != nil {
+			return 0, err
+		}
+		return stat["inactive_file"], nil
+	}
+	path = "/host/sys/fs/cgroup/memory/docker/" + containerID + "/memory.stat"
+	stat, err := readMapFile(path)
+	if err != nil {
+		return 0, err
+	}
+	return stat["total_cache"], nil
+}
+
+func readIntFromFile(path string) (int64, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
+}
+
+func readMapFile(path string) (map[string]int64, error) {
+	result := make(map[string]int64)
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		parts := strings.Fields(scanner.Text())
+		if len(parts) != 2 {
+			continue
+		}
+		value, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			continue
+		}
+		result[parts[0]] = value
+	}
+	return result, scanner.Err()
+}

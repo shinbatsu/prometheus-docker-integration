@@ -153,3 +153,42 @@ func readMapFile(path string) (map[string]int64, error) {
 	}
 	return result, scanner.Err()
 }
+func cleanContainerName(names []string) string {
+	if len(names) == 0 {
+		return "-"
+	}
+	name := names[0]
+	if len(name) > 0 && name[0] == '/' {
+		return name[1:]
+	}
+	return name
+}
+
+func extractStackService(labels map[string]string) (stack, service string) {
+	if val := labels["io.rancher.stack_service.name"]; val != "" {
+		parts := strings.SplitN(val, "/", 2)
+		if len(parts) == 2 {
+			return parts[0], parts[1]
+		}
+	}
+	if val := labels["com.docker.swarm.service.name"]; val != "" {
+		ns := labels["com.docker.stack.namespace"]
+		if ns != "" {
+			return ns, strings.TrimPrefix(val, ns+"_")
+		}
+		parts := strings.SplitN(val, "_", 2)
+		if len(parts) == 2 {
+			return parts[0], parts[1]
+		}
+		return "-", val
+	}
+	stack = labels["com.docker.compose.project"]
+	service = labels["com.docker.compose.service"]
+	if stack == "" {
+		stack = "-"
+	}
+	if service == "" {
+		service = "-"
+	}
+	return stack, service
+}

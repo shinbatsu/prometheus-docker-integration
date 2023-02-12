@@ -192,3 +192,19 @@ func extractStackService(labels map[string]string) (stack, service string) {
 	}
 	return stack, service
 }
+
+func main() {
+	var err error
+	docker, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Fatalf("failed to create Docker client: %v", err)
+	}
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(dockerCollector{})
+
+	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	port := 9476
+	log.Printf("Listening on :%d...", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+}

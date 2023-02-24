@@ -67,3 +67,15 @@ services:
       - "9476:9476"
     restart: unless-stopped
 ```
+
+## Metrics
+
+| Metric | Description |
+|--------|------------ |
+| docker_container_memory_usage_bytes | Memory usage of container in bytes (excluding cache) |
+| docker_container_memory_reservation_bytes | Memory reserved for container |
+| docker_container_memory_limit_bytes | Memory limit for container |
+
+## Env Variables
+
+- `DOCKER_CLUSTER_CGROUP_VERSION` – Optional, `v1` (default) or `v2`.

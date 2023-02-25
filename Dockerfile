@@ -18,4 +18,5 @@ COPY --from=builder /go/bin/prometheus-docker-integration /usr/bin/prometheus-do
 
 RUN apk add --no-cache ca-certificates
 
+# Entrypoint
 CMD ["/usr/bin/prometheus-docker-integration"]

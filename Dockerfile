@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git
 
@@ -10,7 +10,7 @@ RUN go mod download
 COPY . .
 
 ENV CGO_ENABLED=0
-RUN go install -ldflags="-s -w" prometheus-docker-integration
+RUN go install -ldflags="-s -w" .
 
 FROM alpine:3.18 AS final
 
@@ -18,5 +18,6 @@ COPY --from=builder /go/bin/prometheus-docker-integration /usr/bin/prometheus-do
 
 RUN apk add --no-cache ca-certificates
 
-# Entrypoint
+EXPOSE 9476
+
 CMD ["/usr/bin/prometheus-docker-integration"]

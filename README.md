@@ -18,7 +18,7 @@ You can run the exporter as a Docker container. Example:
 ```yaml
 services:
   prometheus-integration:
-    image: your-docker-username/prometheus-integration:latest
+    image: <your-docker-username>/prometheus-integration:latest
     privileged: true
     environment:
       DOCKER_CLUSTER_CGROUP_VERSION: v2

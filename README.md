@@ -1,6 +1,6 @@
 # Docker metrics in Prometheus
 
-Export Docker containe metrics (memory usage, limits, and reservations) to Prometheus.
+Export Docker container metrics (memory usage, limits, and reservations) to Prometheus.
 
 ## Features
 
